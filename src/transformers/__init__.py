@@ -367,6 +367,7 @@ _import_structure = {
     "models.herbert": ["HerbertTokenizer"],
     "models.hubert": ["HUBERT_PRETRAINED_CONFIG_ARCHIVE_MAP", "HubertConfig"],
     "models.ibert": ["IBERT_PRETRAINED_CONFIG_ARCHIVE_MAP", "IBertConfig"],
+    "models.ltp": ["LTP_PRETRAINED_CONFIG_ARCHIVE_MAP", "LTPConfig"],
     "models.idefics": [
         "IDEFICS_PRETRAINED_CONFIG_ARCHIVE_MAP",
         "IdeficsConfig",
@@ -1991,6 +1992,19 @@ else:
             "IBertForTokenClassification",
             "IBertModel",
             "IBertPreTrainedModel",
+        ]
+    )
+    _import_structure["models.ltp"].extend(
+        [
+            "LTP_PRETRAINED_MODEL_ARCHIVE_LIST",
+            "LTPForMaskedLM",
+            "LTPForMultipleChoice",
+            "LTPForQuestionAnswering",
+            "LTPForSequenceClassification",
+            "LTPForTokenClassification",
+            "LTPLayer",
+            "LTPModel",
+            "LTPPreTrainedModel",
         ]
     )
     _import_structure["models.idefics"].extend(
@@ -4512,6 +4526,7 @@ if TYPE_CHECKING:
     from .models.herbert import HerbertTokenizer
     from .models.hubert import HUBERT_PRETRAINED_CONFIG_ARCHIVE_MAP, HubertConfig
     from .models.ibert import IBERT_PRETRAINED_CONFIG_ARCHIVE_MAP, IBertConfig
+    from .models.ltp import LTP_PRETRAINED_CONFIG_ARCHIVE_MAP, LTPConfig
     from .models.idefics import (
         IDEFICS_PRETRAINED_CONFIG_ARCHIVE_MAP,
         IdeficsConfig,
@@ -5909,6 +5924,15 @@ if TYPE_CHECKING:
             IBertForTokenClassification,
             IBertModel,
             IBertPreTrainedModel,
+        )
+        from .models.ltp import (
+            LTP_PRETRAINED_MODEL_ARCHIVE_LIST,
+            LTPForMaskedLM,
+            LTPForMultipleChoice,
+            LTPForQuestionAnswering,
+            LTPForSequenceClassification,
+            LTPForTokenClassification,
+            LTPModel,
         )
         from .models.idefics import (
             IDEFICS_PRETRAINED_MODEL_ARCHIVE_LIST,

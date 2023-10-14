@@ -424,18 +424,21 @@ def main():
         batch.update(processed_batch)
         return batch
 
-    train_dataset = train_dataset.map(
-        prepare_dataset,
-        batch_size=training_args.per_device_train_batch_size,
-        batched=True,
-        num_proc=data_args.preprocessing_num_workers,
-    )
-    val_dataset = val_dataset.map(
-        prepare_dataset,
-        batch_size=training_args.per_device_train_batch_size,
-        batched=True,
-        num_proc=data_args.preprocessing_num_workers,
-    )
+        if training_args.do_train:
+            train_dataset = train_dataset.map(
+                prepare_dataset,
+                batch_size=training_args.per_device_train_batch_size,
+                batched=True,
+                num_proc=data_args.preprocessing_num_workers,
+            )
+
+        if training_args.do_eval:
+            val_dataset = val_dataset.map(
+                prepare_dataset,
+                batch_size=training_args.per_device_train_batch_size,
+                batched=True,
+                num_proc=data_args.preprocessing_num_workers,
+            )
 
     data_collator = DataCollatorCTCWithPadding(processor=processor, padding=True)
 
@@ -468,12 +471,19 @@ def main():
         data_collator=data_collator,
         args=training_args,
         compute_metrics=compute_metrics,
-        train_dataset=train_dataset,
-        eval_dataset=val_dataset,
+        train_dataset=train_dataset if training_args.do_train else None,
+        eval_dataset=val_dataset if training_args.do_eval else None,
         tokenizer=processor.feature_extractor,
     )
 
-    trainer.train()
+    if training_args.do_train:
+        trainer.train()
+
+    if training_args.do_eval:
+        metrics = trainer.evaluate()
+        trainer.log_metrics("eval", metrics)
+        trainer.save_metrics("eval", metrics)
+        print(metrics)
 
 
 if __name__ == "__main__":

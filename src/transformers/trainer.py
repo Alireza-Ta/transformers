@@ -1732,6 +1732,16 @@ class Trainer:
         self._globalstep_last_logged = self.state.global_step
         model.zero_grad()
 
+        # TODO this is an adhoc solution
+        if self.args.masking_mode == 'hard':
+            model.get_model().set_hard_masking(True)
+        elif self.args.masking_mode == 'soft':
+            model.get_model().set_hard_masking(False)
+        else:
+            raise NotImplementedError
+
+        model.get_model().set_temperature(self.args.temperature)
+
         self.control = self.callback_handler.on_train_begin(args, self.state, self.control)
 
         # Skip the first epochs_trained epochs to get the random state of the dataloader at the right point.
@@ -1914,6 +1924,15 @@ class Trainer:
         # add remaining tr_loss
         self._total_loss_scalar += tr_loss.item()
         train_loss = self._total_loss_scalar / self.state.global_step
+
+        if self.args.masking_mode == 'hard':
+            self.model.get_model().set_hard_masking(True)
+        elif self.args.masking_mode == 'soft':
+            self.model.get_model().set_hard_masking(False)
+        else:
+            raise NotImplementedError
+
+        model.get_model().set_temperature(self.args.temperature)
 
         metrics = speed_metrics(
             "train",
@@ -2652,6 +2671,14 @@ class Trainer:
         if self.args.n_gpu > 1:
             loss = loss.mean()  # mean() to average on multi-gpu parallel training
 
+        if self.args.masking_mode == 'soft':
+            loss_regularizer = 0
+            soft_masks = self.model.get_model().get_soft_mask()
+            for mask in soft_masks:
+                if mask is not None:
+                    loss_regularizer += mask.mean()
+            loss += self.args.lambda_threshold * loss_regularizer
+
         if self.use_apex:
             with amp.scale_loss(loss, self.optimizer) as scaled_loss:
                 scaled_loss.backward()
@@ -2694,7 +2721,38 @@ class Trainer:
             # We don't use .loss here since the model may return tuples instead of ModelOutput.
             loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
 
+        if "attention_sentence_lengths" in outputs and len(outputs["attention_sentence_lengths"]) > 0:
+            assert "ffn_sentence_lengths" in outputs and len(outputs["ffn_sentence_lengths"]) > 0
+            dim = model.get_model().config.hidden_size
+            mac, baseline_mac = self.compute_macs(
+                outputs["attention_sentence_lengths"],
+                outputs["ffn_sentence_lengths"],
+                dim,
+            )
+            
+            self.macs += mac
+            self.baseline_macs += baseline_mac
+
         return (loss, outputs) if return_outputs else loss
+
+    def compute_macs(self, attention_sentence_lengths, ffn_sentence_lengths, dim):
+        def _layer_mac(attention_sentence_length, ffn_sentence_length, dim):
+            attention_mac = 2 * dim * attention_sentence_length ** 2 # Q*V, attn*V
+            attention_mac += 4 * dim ** 2 * attention_sentence_length
+            ffn_mac = 8 * dim ** 2 * ffn_sentence_length
+            return attention_mac + ffn_mac
+
+        mac = 0
+        for i in range(len(attention_sentence_lengths)):
+            attention_sentence_length = attention_sentence_lengths[i]
+            ffn_sentence_length = ffn_sentence_lengths[i]
+            mac += _layer_mac(attention_sentence_length, ffn_sentence_length, dim)
+
+        baseline_mac = _layer_mac(
+            attention_sentence_lengths[0], attention_sentence_lengths[0], dim
+        ) * len(attention_sentence_lengths)
+
+        return mac.cpu().tolist(), baseline_mac.cpu().tolist()
 
     def is_local_process_zero(self) -> bool:
         """
@@ -2952,7 +3010,17 @@ class Trainer:
             )
         )
 
+        target_model = self.model.get_model()
+
         self.log(output.metrics)
+
+        logger.info("")
+        for i, layer in enumerate(target_model.encoder.layer):
+            # just an adhoc code for debugging
+            if 'AbsoluteThresholdTokenPruner' in str(type(layer.attention.self.pruner)):
+                logger.info("Layer %d Treshold: %.5f" % (i,
+                    float(layer.attention.self.pruner.keep_threshold + layer.attention.self.pruner.keep_threshold_base))
+                )
 
         if DebugOption.TPU_METRICS_DEBUG in self.args.debug:
             # tpu-comment: Logging debug metrics for PyTorch/XLA (compile, execute times, ops, etc.)
@@ -3023,6 +3091,13 @@ class Trainer:
 
         self.control = self.callback_handler.on_predict(self.args, self.state, self.control, output.metrics)
         self._memory_tracker.stop_and_update_metrics(output.metrics)
+
+        # Log FLOPs if MACs are counted
+        if len(self.macs) > 0:
+            assert len(self.baseline_macs) > 0
+            metrics["baseline_gflops"] = 2 * sum(self.baseline_macs) / len(self.baseline_macs) * 1e-9
+            metrics["gflops"] = 2 * sum(self.macs) / len(self.macs) * 1e-9
+            metrics["relative_flops"] = sum(self.macs) / sum(self.baseline_macs)
 
         return PredictionOutput(predictions=output.predictions, label_ids=output.label_ids, metrics=output.metrics)
 
@@ -3712,6 +3787,9 @@ class Trainer:
             self._past = None
 
         self.callback_handler.eval_dataloader = dataloader
+
+        self.macs = []
+        self.baseline_macs = []
 
         for step, inputs in enumerate(dataloader):
             loss, logits, labels = self.prediction_step(model, inputs, prediction_loss_only, ignore_keys=ignore_keys)

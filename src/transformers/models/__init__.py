@@ -103,6 +103,7 @@ from . import (
     herbert,
     hubert,
     ibert,
+    ltp,
     idefics,
     imagegpt,
     informer,
