@@ -30,6 +30,25 @@ def arg_parse():
     parser.add_argument('--save_all', action='store_true') 
     parser.add_argument('--no_load', action='store_true') 
     parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--fp16', type=bool, default=False)
+    parser.add_argument('--task_name', type=str, default='RTE')
+    parser.add_argument('--evaluation_strategy', type=str, default='epoch')
+    parser.add_argument('--save_strategy', type=str, default='epoch')
+    parser.add_argument('--max_seq_length', type=int, default=128)
+    parser.add_argument('--per_device_train_batch_size', type=int, default=16)
+    parser.add_argument('--per_device_eval_batch_size', type=int, default=16)
+    parser.add_argument('--logging_strategy', type=str, default='epoch')
+    parser.add_argument('--weight_decay', type=float, default=0.1)
+    parser.add_argument('--adam_beta1', type=float, default=0.9)
+    parser.add_argument('--adam_beta2', type=float, default=0.98)
+    parser.add_argument('--adam_epsilon', type=float, default=1e-06)
+    parser.add_argument('--warmup_steps', type=int, default=122)
+    parser.add_argument('--lr_scheduler_type', type=str, default='polynomial')
+    parser.add_argument('--load_best_model_at_end', type=bool, default=False)
+    parser.add_argument('--metric_for_best_model', type=str, default='eval_accuracy')
+    parser.add_argument('--optim', type=str, default='adamw_torch')
+    parser.add_argument('--half_precision_backend', type=str, default='auto')
+    parser.add_argument('--dataloader_num_workers', type=int, default=1)
 
     args = parser.parse_args()
     return args
@@ -45,8 +64,8 @@ if prune_mode == 'topk':
     rate = config['token_keep_rate']
 elif prune_mode in ['absolute_threshold', 'rising_threshold']:
     rate = config['final_token_threshold']
-    if prune_mode == 'absolute_threshold':
-        scoring_mode = config['scoring_mode']
+    # if prune_mode == 'absolute_threshold':
+        # scoring_mode = config['scoring_mode']
 else:
     rate = None
 
@@ -150,7 +169,7 @@ print('output path: ', output_path)
 
 
 if 'ltp' in args.arch:
-    run_file = 'examples/text-classification/run_glue_ltp.py'
+    run_file = 'examples/pytorch/text-classification/run_glue_ltp.py'
 else:
     run_file = 'examples/text-classification/run_glue.py'
 
