@@ -490,7 +490,7 @@ class LTPModel(LTPPreTrainedModel):
 
     @add_start_docstrings_to_model_forward(LTP_INPUTS_DOCSTRING.format("(batch_size, sequence_length)"))
     @add_code_sample_docstrings(
-        tokenizer_class=_TOKENIZER_FOR_DOC,
+        processor_class=_TOKENIZER_FOR_DOC,
         checkpoint="ltp-roberta-base",
         output_type=BaseModelOutputWithPoolingAndCrossAttentions,
         config_class=_CONFIG_FOR_DOC,
@@ -596,7 +596,7 @@ class LTPForMaskedLM(LTPPreTrainedModel):
 
     @add_start_docstrings_to_model_forward(LTP_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
-        tokenizer_class=_TOKENIZER_FOR_DOC,
+        processor_class=_TOKENIZER_FOR_DOC,
         checkpoint="ltp-roberta-base",
         output_type=MaskedLMOutput,
         config_class=_CONFIG_FOR_DOC,
@@ -702,7 +702,7 @@ class LTPForSequenceClassification(LTPPreTrainedModel):
 
     @add_start_docstrings_to_model_forward(LTP_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
-        tokenizer_class=_TOKENIZER_FOR_DOC,
+        processor_class=_TOKENIZER_FOR_DOC,
         checkpoint="ltp-roberta-base",
         output_type=SequenceClassifierOutput,
         config_class=_CONFIG_FOR_DOC,
@@ -790,7 +790,7 @@ class LTPForMultipleChoice(LTPPreTrainedModel):
 
     @add_start_docstrings_to_model_forward(LTP_INPUTS_DOCSTRING.format("batch_size, num_choices, sequence_length"))
     @add_code_sample_docstrings(
-        tokenizer_class=_TOKENIZER_FOR_DOC,
+        processor_class=_TOKENIZER_FOR_DOC,
         checkpoint="ltp-roberta-base",
         output_type=MultipleChoiceModelOutput,
         config_class=_CONFIG_FOR_DOC,
@@ -884,7 +884,7 @@ class LTPForTokenClassification(LTPPreTrainedModel):
 
     @add_start_docstrings_to_model_forward(LTP_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
-        tokenizer_class=_TOKENIZER_FOR_DOC,
+        processor_class=_TOKENIZER_FOR_DOC,
         checkpoint="ltp-roberta-base",
         output_type=TokenClassifierOutput,
         config_class=_CONFIG_FOR_DOC,
@@ -993,7 +993,7 @@ class LTPForQuestionAnswering(LTPPreTrainedModel):
 
     @add_start_docstrings_to_model_forward(LTP_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
-        tokenizer_class=_TOKENIZER_FOR_DOC,
+        processor_class=_TOKENIZER_FOR_DOC,
         checkpoint="ltp-roberta-base",
         output_type=QuestionAnsweringModelOutput,
         config_class=_CONFIG_FOR_DOC,

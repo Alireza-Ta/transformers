@@ -1218,6 +1218,18 @@ class TrainingArguments:
         metadata={"help": "If set to `True`, the speed metrics will include `tgs` (tokens per second per device)."},
     )
 
+    masking_mode: str = field(
+        default='hard', metadata={"help": "Masking mode. 'soft', 'hard' and 'mixed'. 'mixed executes the first half with soft masking and the remaining half with hard mask."}
+    )
+
+    lambda_threshold: float = field(
+        default=None, metadata={"help": "Regularization constant to control the retained tokens for threshold learning. None for fixed thresholds."}
+    )
+
+    temperature: float = field(
+        default=1e-3, metadata={"help": "Temperature for the sigmoid of soft masking."}
+    )
+
     def __post_init__(self):
         # expand paths, if not os.makedirs("~/bar") will make directory
         # in the current directory instead of the actual home

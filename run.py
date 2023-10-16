@@ -49,6 +49,8 @@ def arg_parse():
     parser.add_argument('--optim', type=str, default='adamw_torch')
     parser.add_argument('--half_precision_backend', type=str, default='auto')
     parser.add_argument('--dataloader_num_workers', type=int, default=1)
+    parser.add_argument('--model_name_or_path', type=str, default='')
+
 
     args = parser.parse_args()
     return args
