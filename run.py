@@ -14,13 +14,13 @@ def arg_parse():
                         choices=['RTE', 'SST2', 'MNLI', 'QNLI', 'QQP', 'MRPC', 'STSB'])
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--epoch', type=int, default=10)
-    parser.add_argument('--eval_steps', type=int, default=500)
+    parser.add_argument('--eval_steps', type=int, default=100)
     parser.add_argument('--bs', type=int, default=32)
     parser.add_argument('--restore', type=str, default=None,
                         help='finetuning from the given checkpoint')
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--cuda', type=str, default='0')
-    parser.add_argument('--save_steps', type=int, default=0)
+    parser.add_argument('--save_steps', type=int, default=100)
     parser.add_argument('--lambda_threshold', type=float, default=0)
     parser.add_argument('--weight_decay_threshold', type=float, default=None)
     parser.add_argument('--lr_threshold', type=float, default=None)
@@ -51,6 +51,7 @@ def arg_parse():
     parser.add_argument('--dataloader_num_workers', type=int, default=1)
     parser.add_argument('--model_name_or_path', type=str, default='')
     parser.add_argument('--num_train_epochs', type=int, default=10)
+    parser.add_argument('--logging_steps', type=int, default=100)
 
 
     args = parser.parse_args()
@@ -210,6 +211,7 @@ subprocess_args = [
     '--half_precision_backend', str(args.half_precision_backend),
     '--dataloader_num_workers', str(args.dataloader_num_workers),
     '--num_train_epochs', str(args.num_train_epochs),
+    '--logging_steps', str(args.logging_steps),
     ]
 
 # Training mode
@@ -219,9 +221,9 @@ if not args.eval:
         subprocess_args += ['--evaluation_strategy', 'epoch'] 
         subprocess_args += ['--logging_strategy', 'epoch'] 
     else:
-        # subprocess_args += ['--evaluation_strategy', 'steps'] 
+        subprocess_args += ['--evaluation_strategy', 'steps'] 
         subprocess_args += ['--eval_steps', str(args.save_steps)]
-        # subprocess_args += ['--logging_strategy', 'steps'] 
+        subprocess_args += ['--logging_strategy', 'steps'] 
         subprocess_args += ['--logging_steps', str(args.save_steps)]
     subprocess_args += [
                    '--metric_for_best_model', metric,
