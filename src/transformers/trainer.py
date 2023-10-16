@@ -3092,12 +3092,12 @@ class Trainer:
         self.control = self.callback_handler.on_predict(self.args, self.state, self.control, output.metrics)
         self._memory_tracker.stop_and_update_metrics(output.metrics)
 
-        # Log FLOPs if MACs are counted
-        if len(self.macs) > 0:
-            assert len(self.baseline_macs) > 0
-            metrics["baseline_gflops"] = 2 * sum(self.baseline_macs) / len(self.baseline_macs) * 1e-9
-            metrics["gflops"] = 2 * sum(self.macs) / len(self.macs) * 1e-9
-            metrics["relative_flops"] = sum(self.macs) / sum(self.baseline_macs)
+        # # Log FLOPs if MACs are counted
+        # if len(self.macs) > 0:
+        #     assert len(self.baseline_macs) > 0
+        #     metrics["baseline_gflops"] = 2 * sum(self.baseline_macs) / len(self.baseline_macs) * 1e-9
+        #     metrics["gflops"] = 2 * sum(self.macs) / len(self.macs) * 1e-9
+        #     metrics["relative_flops"] = sum(self.macs) / sum(self.baseline_macs)
 
         return PredictionOutput(predictions=output.predictions, label_ids=output.label_ids, metrics=output.metrics)
 
@@ -3181,6 +3181,9 @@ class Trainer:
         all_labels = None
         all_inputs = None
         # Will be useful when we have an iterable dataset so don't know its length.
+
+        self.macs = []
+        self.baseline_macs = []
 
         observed_num_examples = 0
         # Main evaluation loop
@@ -3314,6 +3317,13 @@ class Trainer:
         for key in list(metrics.keys()):
             if not key.startswith(f"{metric_key_prefix}_"):
                 metrics[f"{metric_key_prefix}_{key}"] = metrics.pop(key)
+
+        # Log FLOPs if MACs are counted
+        if len(self.macs) > 0:
+            assert len(self.baseline_macs) > 0
+            metrics["baseline_gflops"] = 2 * sum(self.baseline_macs) / len(self.baseline_macs) * 1e-9
+            metrics["gflops"] = 2 * sum(self.macs) / len(self.macs) * 1e-9
+            metrics["relative_flops"] = sum(self.macs) / sum(self.baseline_macs)
 
         return EvalLoopOutput(predictions=all_preds, label_ids=all_labels, metrics=metrics, num_samples=num_samples)
 
@@ -3858,6 +3868,13 @@ class Trainer:
         for key in list(metrics.keys()):
             if not key.startswith(f"{metric_key_prefix}_"):
                 metrics[f"{metric_key_prefix}_{key}"] = metrics.pop(key)
+
+        # Log FLOPs if MACs are counted
+        if len(self.macs) > 0:
+            assert len(self.baseline_macs) > 0
+            metrics["baseline_gflops"] = 2 * sum(self.baseline_macs) / len(self.baseline_macs) * 1e-9
+            metrics["gflops"] = 2 * sum(self.macs) / len(self.macs) * 1e-9
+            metrics["relative_flops"] = sum(self.macs) / sum(self.baseline_macs)
 
         return EvalLoopOutput(predictions=preds, label_ids=label_ids, metrics=metrics, num_samples=num_examples)
 

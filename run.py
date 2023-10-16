@@ -13,14 +13,14 @@ def arg_parse():
     parser.add_argument('--task', type=str, help='finetuning task',
                         choices=['RTE', 'SST2', 'MNLI', 'QNLI', 'QQP', 'MRPC', 'STSB'])
     parser.add_argument('--eval', action='store_true')
-    parser.add_argument('--eval_steps', type=int, default=None)
-    parser.add_argument('--bs', type=int, default=32)
     parser.add_argument('--epoch', type=int, default=10)
+    parser.add_argument('--eval_steps', type=int, default=500)
+    parser.add_argument('--bs', type=int, default=32)
     parser.add_argument('--restore', type=str, default=None,
                         help='finetuning from the given checkpoint')
     parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--cuda', type=str, default='0')
-    parser.add_argument('--save_steps', type=int, default=None)
+    parser.add_argument('--save_steps', type=int, default=0)
     parser.add_argument('--lambda_threshold', type=float, default=None)
     parser.add_argument('--weight_decay_threshold', type=float, default=None)
     parser.add_argument('--lr_threshold', type=float, default=None)
@@ -33,11 +33,11 @@ def arg_parse():
     parser.add_argument('--fp16', type=bool, default=False)
     parser.add_argument('--task_name', type=str, default='RTE')
     parser.add_argument('--evaluation_strategy', type=str, default='epoch')
+    parser.add_argument('--logging_strategy', type=str, default='epoch')
     parser.add_argument('--save_strategy', type=str, default='epoch')
     parser.add_argument('--max_seq_length', type=int, default=128)
     parser.add_argument('--per_device_train_batch_size', type=int, default=16)
     parser.add_argument('--per_device_eval_batch_size', type=int, default=16)
-    parser.add_argument('--logging_strategy', type=str, default='epoch')
     parser.add_argument('--weight_decay', type=float, default=0.1)
     parser.add_argument('--adam_beta1', type=float, default=0.9)
     parser.add_argument('--adam_beta2', type=float, default=0.98)
@@ -50,6 +50,7 @@ def arg_parse():
     parser.add_argument('--half_precision_backend', type=str, default='auto')
     parser.add_argument('--dataloader_num_workers', type=int, default=1)
     parser.add_argument('--model_name_or_path', type=str, default='')
+    parser.add_argument('--num_train_epochs', type=int, default=10)
 
 
     args = parser.parse_args()
@@ -185,6 +186,30 @@ subprocess_args = [
     '--per_device_eval_batch_size', str(args.bs),
     '--masking_mode', args.masking_mode,
     '--seed', str(args.seed),
+    '--eval_steps', str(args.eval_steps),
+    '--output_dir', str(args.output_dir),
+    '--save_steps', str(args.save_steps),
+    '--lambda_threshold', str(args.lambda_threshold),
+    '--temperature', str(args.temperature),
+    '--fp16', str(args.fp16),
+    '--evaluation_strategy', str(args.evaluation_strategy),
+    '--logging_strategy', str(args.logging_strategy),
+    '--save_strategy', str(args.save_strategy),
+    '--max_seq_length', str(args.max_seq_length),
+    '--per_device_train_batch_size', str(args.per_device_train_batch_size),
+    '--per_device_eval_batch_size', str(args.per_device_eval_batch_size),
+    '--weight_decay', str(args.weight_decay),
+    '--adam_beta1', str(args.adam_beta1),
+    '--adam_beta2', str(args.adam_beta2),
+    '--adam_epsilon', str(args.adam_epsilon),
+    '--warmup_steps', str(args.warmup_steps),
+    '--lr_scheduler_type', str(args.lr_scheduler_type),
+    '--load_best_model_at_end', str(args.load_best_model_at_end),
+    '--metric_for_best_model', str(args.metric_for_best_model),
+    '--optim', str(args.optim),
+    '--half_precision_backend', str(args.half_precision_backend),
+    '--dataloader_num_workers', str(args.dataloader_num_workers),
+    '--num_train_epochs', str(args.num_train_epochs),
     ]
 
 # Training mode
@@ -194,9 +219,9 @@ if not args.eval:
         subprocess_args += ['--evaluation_strategy', 'epoch'] 
         subprocess_args += ['--logging_strategy', 'epoch'] 
     else:
-        subprocess_args += ['--evaluation_strategy', 'steps'] 
+        # subprocess_args += ['--evaluation_strategy', 'steps'] 
         subprocess_args += ['--eval_steps', str(args.save_steps)]
-        subprocess_args += ['--logging_strategy', 'steps'] 
+        # subprocess_args += ['--logging_strategy', 'steps'] 
         subprocess_args += ['--logging_steps', str(args.save_steps)]
     subprocess_args += [
                    '--metric_for_best_model', metric,
